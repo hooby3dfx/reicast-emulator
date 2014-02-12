@@ -50,7 +50,7 @@ class GL2JNIView extends GLSurfaceView
   //private AudioThread audioThread;  
   private EmuThread ethd = new EmuThread();
 
-  private static final boolean DEBUG           = false;
+  protected static final boolean DEBUG           = false;
   private static final int key_CONT_B          = 0x0002;
   private static final int key_CONT_A          = 0x0004;
   private static final int key_CONT_START      = 0x0008;
@@ -229,9 +229,6 @@ class GL2JNIView extends GLSurfaceView
     if (GL2JNIActivity.syms != null)
     	JNIdc.data(1, GL2JNIActivity.syms);
 
-//    int[] kcode = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
-//    int[] rt = { 0, 0, 0, 0 }, lt = { 0, 0, 0, 0 };
-//    int[] jx = { 128, 128, 128, 128 }, jy = { 128, 128, 128, 128 };
     JNIdc.init(fileName);
 
     // By default, GLSurfaceView() creates a RGB_565 opaque surface.
@@ -242,7 +239,7 @@ class GL2JNIView extends GLSurfaceView
 
     // Setup the context factory for 2.0 rendering.
     // See ContextFactory class definition below
-    setEGLContextFactory(new ContextFactory());
+    setEGLContextFactory(getContextFactory());
 
     // We need to choose an EGLConfig that matches the format of
     // our surface exactly. This is going to be done in our
@@ -250,15 +247,12 @@ class GL2JNIView extends GLSurfaceView
     // below.
     setEGLConfigChooser(
       translucent?
-        new ConfigChooser(8, 8, 8, 8, depth, stencil)
-      : new ConfigChooser(5, 6, 5, 0, depth, stencil)
+        getConfigChooser(8, 8, 8, 8, depth, stencil)
+      : getConfigChooser(5, 6, 5, 0, depth, stencil)
     );
 
     // Set the renderer responsible for frame rendering
     setRenderer(rend=new Renderer());
-
-    // Initialize audio
-    //configAudio(44100,250);
     
     ethd.start();
   }
@@ -271,12 +265,6 @@ class GL2JNIView extends GLSurfaceView
   private static void LOGI(String S) { Log.i("GL2JNIView",S); }
   private static void LOGW(String S) { Log.w("GL2JNIView",S); }
   private static void LOGE(String S) { Log.e("GL2JNIView",S); }
-
-//  public void configAudio(int rate,int latency)
-//  {
-//    //if(audioThread!=null) audioThread.stopPlayback();
-//    //audioThread = new AudioThread(rate,latency);
-//  }
 
   private void reset_analog()
   {
@@ -313,7 +301,7 @@ class GL2JNIView extends GLSurfaceView
   {  
 		super.onLayout(changed, left, top, right, bottom);
 		//dcpx/cm = dcpx/px * px/cm
-                float magic = isTablet() ? 0.8f : 0.7f;
+		float magic = isTablet() ? 0.8f : 0.7f;
 		float scl=480.0f/getHeight() * getContext().getResources().getDisplayMetrics().density * magic;
 		float scl_dc=getHeight()/480.0f;
 		float tx  = ((getWidth()-640.0f*scl_dc)/2)/scl_dc;
@@ -321,7 +309,7 @@ class GL2JNIView extends GLSurfaceView
 		float a_x = -tx+ 24*scl;
 		float a_y=- 24*scl;
 		
-                float[][] vjoy_d = getVjoy_d(vjoy_d_custom);
+		float[][] vjoy_d = getVjoy_d(vjoy_d_custom);
 
 		for(int i=0;i<vjoy.length;i++)
 		{
@@ -612,6 +600,10 @@ private class OscOnScaleGestureListener extends
  }
 }
 
+protected GLSurfaceView.EGLContextFactory getContextFactory(){
+	return new ContextFactory();
+}
+
 private static class ContextFactory implements GLSurfaceView.EGLContextFactory
   {
     private static final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
@@ -643,6 +635,10 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
       LOGE(String.format("%s: EGL error: 0x%x",prompt,error));
   }
 
+  protected GLSurfaceView.EGLConfigChooser getConfigChooser(int r,int g,int b,int a,int depth,int stencil){
+	  return new ConfigChooser(r, g, b, a, depth, stencil);
+  }
+  
   private static class ConfigChooser implements GLSurfaceView.EGLConfigChooser
   {
     // Subclasses can adjust these values:
@@ -863,8 +859,6 @@ private static class ContextFactory implements GLSurfaceView.EGLContextFactory
   {
     public void onDrawFrame(GL10 gl)
     {
-      //Log.w("INPUT", " " + kcode_raw + " " + rt + " " + lt + " " + jx + " " + jy);
-      //JNIdc.kcode(kcode_raw,lt,rt,jx,jy);
       // Natively update nullDC display
       JNIdc.rendframe();
     }
