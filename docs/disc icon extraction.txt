@@ -1,0 +1,29 @@
+Extracting icon file from any disc image
+
+high level:
+-Make method that takes a path of the image
+-Use existing code to load that disc
+-Add code to use that and find the data track
+-Get access to iso file system in that track
+-Copy out 0GDTEX.PVR
+-Convert to PNG
+-save PNG as "same_name_as_disc".png
+-add android code to do this for all titles if there is no png
+-add code to read png files and show them for each game
+
+
+
+
+notes:
+
+how disc files are loaded now:
+-path of image is passed as arg for virtual cfg
+-ImgReader.cpp libGDR_Init
+-common.cpp InitDrive
+-common.cpp InitDrive_ attempts to load with each driver (chd, gdi, cdi; one of them should work!)
+	-these all extend Disc
+	-driver generates the tracks
+	-Disc FillGDSession
+	-***at this point should be able to access data track***
+-gdromv3.cpp libCore_gdrom_disc_change!
+...core stuff
